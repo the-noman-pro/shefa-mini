@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.db import models
 from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
@@ -25,7 +26,11 @@ class CaseListView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        queryset = Case.objects.all()
+        queryset = Case.objects.annotate(
+            closed_rank=models.Case(
+                models.When(status=Case.Status.OPEN, then=0), default=1, output_field=models.IntegerField()
+            )
+        ).order_by("closed_rank", "-created_at", "-id")
         category = self.request.query_params.get("category")
         if category:
             queryset = queryset.filter(category=category)

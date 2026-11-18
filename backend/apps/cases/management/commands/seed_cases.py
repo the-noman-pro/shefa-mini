@@ -177,7 +177,8 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         created = 0
-        for data in CASES:
+        # Newest first on the cases page, so create in reverse to show them in the order listed.
+        for data in reversed(CASES):
             data = dict(data)
             donors = data.pop("donors")
             slug = data.pop("slug")
