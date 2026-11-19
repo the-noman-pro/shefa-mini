@@ -47,3 +47,16 @@ any 3-digit code.
 database is unreachable.
 
 More detail (layout, env vars, API) is in [AGENTS.md](AGENTS.md).
+
+## Branching
+
+```
+feature/* ──PR──▶ develop ──▶ CI + deploy to staging
+                     │
+                     └──release PR──▶ main ──▶ production
+```
+
+- `develop` and `main` are protected: no direct pushes, changes only through a pull request.
+- Work on a short-lived branch from `develop` (`feature/…`, `fix/…`, `docs/…`), open a PR into `develop`, squash-merge, delete the branch.
+- `main` only moves through a release PR from `develop`.
+- Keep a branch current with `git rebase develop`; never rebase `develop` or `main`.
