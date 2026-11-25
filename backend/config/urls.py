@@ -13,3 +13,4 @@ urlpatterns = [
     path("api/wallet/", include("apps.wallets.urls")),
     path("api/", include("apps.cases.urls")),
 ]
+import os
