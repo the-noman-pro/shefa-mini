@@ -118,5 +118,21 @@ jobs:
       - run: docker compose pull
       - run: docker compose up -d --wait db
       - run: docker compose run --rm backend python manage.py migrate --noinput
+      - run: docker compose run --rm backend python manage.py seed_cases --demo-user
       - run: docker compose up -d --wait --remove-orphans
       - run: curl -fsS --retry 10 --retry-delay 3 --retry-all-errors http://localhost:8081/api/health/
+
+  notify:
+    if: ${{ !cancelled() }}
+    needs: [backend, frontend, images, deploy-staging]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Notify Slack
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RESULT: ${{ contains(needs.*.result, 'failure') && 'failure' || 'success' }}
+          TITLE: ${{ github.event.pull_request.title || github.event.head_commit.message || github.workflow }}
+        run: |
+          bash .github/notify-slack.sh "$RESULT" "CI $RESULT on $GITHUB_REF_NAME ($GITHUB_EVENT_NAME): ${TITLE%%$'\n'*}, by $GITHUB_ACTOR"
