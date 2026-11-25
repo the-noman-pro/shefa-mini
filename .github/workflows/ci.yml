@@ -9,7 +9,7 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -97,3 +97,26 @@ jobs:
             ghcr.io/the-noman-pro/shefa-mini-${{ matrix.service }}:develop
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  deploy-staging:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: [images]
+    runs-on: [self-hosted, staging]
+    environment:
+      name: staging
+      url: http://localhost:8081
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      COMPOSE_FILE: compose.staging.yaml
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker compose pull
+      - run: docker compose up -d --wait db
+      - run: docker compose run --rm backend python manage.py migrate --noinput
+      - run: docker compose up -d --wait --remove-orphans
+      - run: curl -fsS --retry 10 --retry-delay 3 --retry-all-errors http://localhost:8081/api/health/
