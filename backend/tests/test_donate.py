@@ -36,3 +36,8 @@ def test_donation_larger_than_balance_is_refused_and_nothing_changes():
     assert case.raised == Decimal("0.00")
     assert case.donors_count == 0
     assert not Donation.objects.filter(case=case).exists()
+
+
+@pytest.mark.django_db
+def test_drill_deliberately_failing():
+    assert Decimal("50.00") - Decimal("100.00") >= 0, "drill: this test fails on purpose"
