@@ -17,7 +17,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/the-noman-pro/shefa-mini-backend:${IMAGE_TAG:?set by the deploy job}
+    image: ghcr.io/the-noman-pro/shefa-mini-backend:${BACKEND_TAG:-develop}
     environment:
       SECRET_KEY: ${SECRET_KEY:?set by the deploy job}
       DEBUG: "false"
@@ -35,7 +35,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ghcr.io/the-noman-pro/shefa-mini-frontend:${IMAGE_TAG:?set by the deploy job}
+    image: ghcr.io/the-noman-pro/shefa-mini-frontend:${FRONTEND_TAG:-develop}
     ports:
       - "127.0.0.1:8081:8080"
     depends_on:
