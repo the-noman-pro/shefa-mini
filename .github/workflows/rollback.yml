@@ -3,8 +3,13 @@ name: Rollback staging
 on:
   workflow_dispatch:
     inputs:
+      service:
+        description: Which part to roll back
+        type: choice
+        options: [backend, frontend]
+        required: true
       sha:
-        description: Full commit SHA from develop whose images to put back on staging
+        description: Full develop commit SHA that built an image of this service
         required: true
 
 concurrency:
@@ -21,16 +26,20 @@ jobs:
       name: staging
       url: http://localhost:8081
     env:
-      IMAGE_TAG: ${{ inputs.sha }}
+      SERVICE: ${{ inputs.service }}
+      BACKEND_TAG: ${{ inputs.service == 'backend' && inputs.sha || 'develop' }}
+      FRONTEND_TAG: ${{ inputs.service == 'frontend' && inputs.sha || 'develop' }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       COMPOSE_FILE: compose.staging.yaml
     steps:
       - name: Check the input is a full commit SHA
-        run: echo "$IMAGE_TAG" | grep -Eqx '[0-9a-f]{40}'
+        env:
+          SHA: ${{ inputs.sha }}
+        run: echo "$SHA" | grep -Eqx '[0-9a-f]{40}'
       - uses: actions/checkout@v7
-      - run: docker compose pull
-      - run: docker compose up -d --wait --remove-orphans
+      - run: docker compose pull "$SERVICE"
+      - run: docker compose up -d --wait --no-deps "$SERVICE"
       - run: curl -fsS --retry 10 --retry-delay 3 --retry-all-errors http://localhost:8081/api/health/
       - name: Notify Slack
         if: ${{ !cancelled() }}
@@ -38,5 +47,6 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           RESULT: ${{ job.status }}
+          SHA: ${{ inputs.sha }}
         run: |
-          bash .github/notify-slack.sh "$RESULT" "Staging rollback to ${IMAGE_TAG:0:7}: $RESULT, by $GITHUB_ACTOR"
+          bash .github/notify-slack.sh "$RESULT" "Staging rollback of $SERVICE to ${SHA:0:7}: $RESULT, by $GITHUB_ACTOR"
