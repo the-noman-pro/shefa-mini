@@ -58,7 +58,7 @@ watch(category, loadCases, { immediate: true })
     <section class="intro" aria-labelledby="intro-title">
       <div class="intro-copy">
         <p class="kicker">Give from your wallet, in a few taps</p>
-        <h1 id="intro-title">Small gifts, carried to <span class="underline">real doors</span>.</h1>
+        <h1 id="intro-title">Small gifts, walked to <span class="underline">real doors</span>.</h1>
         <p class="lede">
           Top up once, then give to the cases that move you. Every riyal shows up in the case's jar
           the moment you give.
